@@ -1,0 +1,144 @@
+# =================================================
+# PM - Package Manager Configuration
+# Arquivo de configuração principal
+# =================================================
+
+# ----------------- Version Tracker -----------------
+version_tracker:
+  # Intervalo em dias para checagem de novas versões
+  check_interval_days: 7
+  
+  # Se true, atualiza automaticamente pacotes opcionais
+  auto_update: false
+  
+  # Se true, apenas notifica pacotes críticos sem atualizar
+  notify_critical: true
+  
+  # Lista de pacotes que não devem ser atualizados automaticamente
+  critical_programs:
+    - gcc
+    - glibc
+    - kernel
+    - xorg-server
+    - xorg-apps
+    - systemd
+
+# ----------------- Diretórios -----------------
+directories:
+  # Diretório onde os pacotes serão baixados e compilados
+  packages_dir: "/opt/pm/packages"
+  
+  # Diretório onde as receitas YAML ficam armazenadas
+  recipes_dir: "/opt/pm/recipes"
+  
+  # Diretório de logs e registros de builds
+  logs_dir: "/opt/pm/logs"
+  
+  # Diretório temporário de sandbox/fakeroot
+  sandbox_dir: "/opt/pm/sandbox"
+
+# ----------------- Sandbox -----------------
+sandbox:
+  # Habilita o uso de sandbox durante builds
+  enable: true
+  
+  # Se true, usa fakeroot para builds sem privilégios
+  fakeroot: true
+  
+  # Permissões padrão para diretórios e arquivos criados dentro do sandbox
+  default_permissions: "0755"
+  
+  # Usuário e grupo padrão para sandbox (opcional)
+  user: "pmuser"
+  group: "pmgroup"
+
+# ----------------- Build -----------------
+build:
+  # Número padrão de jobs paralelos para make
+  jobs_default: 1
+  
+  # Se true, limpa diretórios de build antes de compilar
+  clean_before_build: false
+  
+  # Timeout padrão de build em segundos (0 = sem limite)
+  timeout: 0
+  
+  # Tipos de build suportados
+  supported_build_types:
+    - autotools
+    - cmake
+    - meson
+    - mozconfig
+    - python
+    - rust
+
+# ----------------- Hooks -----------------
+hooks:
+  # Diretórios onde os scripts de hook podem estar
+  hooks_dir: "/opt/pm/hooks"
+  
+  # Habilita execução inline de comandos nos hooks
+  inline_hooks: true
+  
+  # Tipos de hooks suportados
+  supported_hooks:
+    - pre_build
+    - post_build
+    - pre_install
+    - post_install
+    - post_remove
+
+# ----------------- Logs -----------------
+logs:
+  # Habilita logs coloridos
+  color: true
+  
+  # Habilita animação de progresso
+  animation: true
+  
+  # Nível de log padrão: info, warn, error, debug
+  level: "info"
+
+# ----------------- Dependency -----------------
+dependency:
+  # Habilita resolução topológica
+  topological_sort: true
+  
+  # Habilita verificação de dependências órfãs
+  remove_orphans: true
+  
+  # Considera USE flags ao resolver dependências
+  respect_use_flags: true
+
+# ----------------- Recipes -----------------
+recipes:
+  # Método de sincronização das receitas: git ou https
+  sync_method: "git"
+  
+  # URL do repositório remoto de receitas
+  repo_url: "https://github.com/fcanata061/pm-recipes.git"
+  
+  # Intervalo em dias para sincronização automática
+  auto_sync_days: 7
+
+# ----------------- Optional Commands -----------------
+optional_commands:
+  # Comandos opcionais que podem ser habilitados
+  enable_strip: true          # Strip de binários após build
+  enable_check: true          # Rodar make check/testes
+  enable_groups: true         # Suporte a grupos de pacotes
+  enable_revdep: true         # Ver dependentes de pacotes
+  enable_version_tracker: true # Versões novas e atualizações automáticas
+  enable_recipe_sync: true     # Sincronização de receitas
+
+# ----------------- Segurança -----------------
+security:
+  # Permitir builds somente de pacotes confiáveis
+  allow_unstable: false
+  
+  # Verificação de hash dos pacotes baixados
+  verify_sha256: true
+
+# =================================================
+# Fim do config.yaml
+# =================================================
