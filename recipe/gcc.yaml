@@ -1,0 +1,69 @@
+name: gcc
+version: "13.2.0"
+description: "GNU Compiler Collection completo (Stage3 toolchain build)"
+
+urls:
+  tarball: "https://ftp.gnu.org/gnu/gcc/gcc-13.2.0/gcc-13.2.0.tar.xz"
+  git: ""  # opcional
+
+sha256: "<sha256-do-tarball>"
+
+# Dependências de build
+dependencias_build:
+  - mpfr
+  - gmp
+  - mpc
+  - isl
+  - cloog
+  - zlib
+  - make
+  - bash
+  - bison
+  - flex
+  - patch
+
+# Dependências de runtime
+dependencias_runtime:
+  - libc
+  - linux-headers
+
+# Patches opcionais
+patches:
+  - file: "gcc-fix.patch"
+    strip: 1
+
+# Flags USE opcionais
+flags_USE: []
+
+# Tipo de build
+tipo_build: autotools
+
+# Comandos específicos de cada stage
+stages:
+  stage1:
+    config_cmd: "./configure --prefix=/mnt/gcc-stage1 --disable-multilib --disable-bootstrap --enable-languages=c"
+    build_cmd: "make -j$(nproc)"
+    install_cmd: "make install"
+    build_dir: "build-stage1"
+
+  stage2:
+    config_cmd: "./configure --prefix=/mnt/gcc-stage2 --disable-multilib --enable-languages=c,c++"
+    build_cmd: "make -j$(nproc)"
+    install_cmd: "make install"
+    build_dir: "build-stage2"
+
+  stage3:
+    config_cmd: "./configure --prefix=/usr --enable-languages=c,c++ --enable-shared --enable-threads=posix --enable-lto"
+    build_cmd: "make -j$(nproc)"
+    install_cmd: "make install"
+    build_dir: "build-stage3"
+
+# Hooks
+hooks:
+  pre_download: []
+  pre_build: []
+  post_build: []
+  post_install: []
+
+# Sandbox
+sandbox_dir: "gcc-sandbox"
