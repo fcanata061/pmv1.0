@@ -1,0 +1,235 @@
+=========================================
+PM - Package Manager
+Versão: 1.0
+Autor: Fernando Canata
+Descrição: Gerenciador de pacotes modular, com suporte a sandbox, hooks, logs, stages de compilação, groups, version tracking e recipes.
+=========================================
+
+1. REQUISITOS E DEPENDÊNCIAS
+-----------------------------
+Para utilizar o PM corretamente, certifique-se de ter instalado:
+
+- Python 3.10 ou superior
+- Git (para sincronização de recipes)
+- Ferramentas básicas de compilação (make, gcc, tar, xz, gzip, curl/wget)
+- Dependências opcionais por pacote (ex.: autoconf, automake, pkg-config, python3, rust)
+
+Diretórios necessários:
+
+- /usr/local/bin/ → para instalar o comando `pm`
+- /opt/pm/ ou ~/pm/ → diretório principal do PM (pode ser alterado)
+- /opt/pm/packages/ → onde os pacotes serão baixados e construídos
+- /opt/pm/recipes/ → diretório com receitas YAML
+
+---
+
+2. INSTALAÇÃO DO PM
+-------------------
+1. Clone o repositório do PM:
+   git clone https://github.com/fcanata061/pmv1.0.git ~/pm
+
+2. Entre no diretório:
+   cd ~/pm
+
+3. Dê permissão de execução para o comando `pm`:
+   chmod +x pm
+
+4. Copie o script `pm` para um diretório no PATH:
+   sudo cp pm /usr/local/bin/
+
+5. Verifique se o PM está funcionando:
+   pm --help
+
+---
+
+3. ESTRUTURA DE DIRETÓRIOS
+--------------------------
+pm/
+├── core/                  ← Módulos principais
+│   ├── build.py
+│   ├── install.py
+│   ├── remove.py
+│   ├── groups.py
+│   ├── hooks.py
+│   ├── dependency.py
+│   ├── updater.py
+│   ├── version_tracker.py
+│   ├── search.py
+│   ├── recipe_sync.py
+│   ├── logger.py
+│   └── utils.py
+├── recipes/               ← Receitas YAML dos pacotes
+├── main.py                ← Função main() com CLI
+└── pm                     ← Script executável (comando PM)
+
+---
+
+4. CONFIGURAÇÃO
+----------------
+- `core/config.py` → arquivo de configuração
+- Possíveis configurações:
+
+version_tracker:
+  check_interval_days: 7       # Intervalo para checar novas versões
+  auto_update: false           # Atualização automática de pacotes seguros
+  notify_critical: true        # Apenas notifica pacotes críticos
+  critical_programs:
+    - gcc
+    - glibc
+    - kernel
+    - xorg-server
+
+- As receitas YAML incluem:
+  - nome, versão, descrição
+  - URLs de download (tarball/git)
+  - dependências build/runtime
+  - flags USE
+  - tipo de build (autotools, mozconfig, etc.)
+  - hooks (pre/post build/install/remove)
+  - sha256sum
+
+---
+
+5. COMANDOS E OPÇÕES
+---------------------
+
+1. INSTALL (i)
+   pm install <pacote> [-b] [-j N]
+   - Instala um pacote
+   - `-b` → build only (não instala)
+   - `-j N` → número de jobs para compilação paralela
+   - Ex.: pm i gcc-stage1 -j 4
+
+2. REMOVE (rm)
+   pm remove <pacote> [-o]
+   - Remove um pacote
+   - `-o` → remove pacotes órfãos
+   - Ex.: pm rm vim -o
+
+3. BUILD (b)
+   pm build <pacote> [-j N] [--clean]
+   - Compila um pacote
+   - `--clean` → limpa diretórios de build antes de compilar
+   - Ex.: pm b firefox --clean -j 4
+
+4. SEARCH (s)
+   pm search <query> [-g <grupo>]
+   - Busca pacotes instalados ou disponíveis
+   - Mostra se o pacote está instalado com [✔]
+   - Ex.: pm s gcc
+   - Ex.: pm s "firefox" -g browser
+
+5. GROUPS (gr)
+   pm groups <grupo>
+   - Exibe pacotes pertencentes a um grupo
+   - Pode instalar ou remover grupo inteiro via install/remove
+   - Ex.: pm groups base
+
+6. HOOKS (hk)
+   pm hooks <tipo>
+   - Executa hooks configurados
+   - Tipos: pre_build, post_build, pre_install, post_install, post_remove
+   - Ex.: pm hk pre_build
+
+7. REVDEP (rd)
+   pm revdep <pacote>
+   - Lista pacotes que dependem de um pacote específico
+   - Ex.: pm rd glibc
+
+8. DEPENDENCY (d)
+   pm dep <pacote1> <pacote2> ...
+   - Ordena topologicamente pacotes para build
+   - Ex.: pm d gcc mpfr gmp mpc
+
+9. UPDATE (up)
+   pm update [--group <grupo>]
+   - Atualiza pacotes opcionais
+   - Ex.: pm up
+   - Ex.: pm up --group base
+
+10. VERSION TRACKER (vc / vu)
+    pm version-check       → exibe pacotes com novas versões
+    pm version-update <pacote> → atualiza pacote específico
+    - Pacotes críticos não são atualizados automaticamente
+
+11. RECIPE SYNC (sr / sro)
+    pm sync-recipes        → sincroniza todas as receitas
+    pm sync-recipe <pacote> → sincroniza receita específica
+
+---
+
+6. STAGES (ex.: GCC)
+--------------------
+- Suporte a 3 stages de compilação:
+  - gcc-stage1 → toolchain inicial
+  - gcc-stage2 → toolchain completo
+  - gcc-stage3 → compilação final do GCC
+- Exemplo de uso:
+  pm i gcc-stage1
+  pm i gcc-stage2
+  pm i gcc-stage3
+
+- O PM detecta stages e compila apenas o necessário.
+
+---
+
+7. SANDBOX, LOGS E HOOKS
+------------------------
+- **Sandbox:** cada build é isolado, permissões definidas, fakeroot suportado
+- **Logs:** registro colorido e animado de builds
+- **Hooks:** podem executar scripts externos ou comandos inline antes e depois de build/install/remove
+
+---
+
+8. GRUPOS
+---------
+- Permite instalar/atualizar/remover grupos de pacotes
+- Exemplo: grupo `base` instala gcc, binutils, glibc, kernel
+- Exemplo: pm groups base → mostra todos os pacotes do grupo
+
+---
+
+9. DEPENDÊNCIAS E REVDEP
+-------------------------
+- Dependências são resolvidas topologicamente
+- `revdep` lista pacotes que dependem de outro pacote
+- Suporte a flags USE, runtime/build dependencies
+
+---
+
+10. VERSION TRACKER
+------------------
+- Checa novas versões de pacotes
+- Notifica pacotes críticos, atualiza opcionais
+- Ex.: pm vc → mostra versões novas
+- Ex.: pm vu vim → atualiza vim
+
+---
+
+11. EXEMPLOS COMPLETOS
+----------------------
+- Instalar GCC stage1:
+  pm i gcc-stage1 -j 4
+- Compilar Firefox sem instalar:
+  pm b firefox -j 8 --clean
+- Remover pacote e órfãos:
+  pm rm vim -o
+- Atualizar todos os pacotes opcionais:
+  pm up
+- Checar pacotes com versões novas:
+  pm vc
+- Sincronizar receitas:
+  pm sr
+
+---
+
+12. NOTAS FINAIS
+----------------
+- Certifique-se de manter as recipes YAML atualizadas
+- Mantenha módulos core integrados: build, install, remove, dependency, hooks, logger, updater, version_tracker
+- Sandbox e logs garantem builds seguros e rastreáveis
+- Stages permitem builds complexos de toolchain (GCC, GLIBC, Kernel)
+
+=========================================
+Fim do Tutorial PM
+=========================================
